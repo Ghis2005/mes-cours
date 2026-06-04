@@ -3,9 +3,6 @@ const GITHUB_OWNER = 'Ghis2005';
 const GITHUB_REPO = 'mes-cours';
 const GITHUB_BRANCH = 'main'; 
 const COURS_FOLDER = 'cours';
-
-// Projet unique pour tes compteurs (API Publique Gratuite CounterAPI)
-const COUNTER_PROJECT = 'ghis2005_mes_cours_partage'; 
 // ----------------------------
 
 let cachedToken = ''; // Stocké uniquement en mémoire pendant la session d'administration
@@ -45,7 +42,7 @@ async function initIndex() {
 
         populateFilterOptions();
         
-        // On utilise "await" ici car renderCourses va maintenant chercher les compteurs sur le web
+        // Affichage direct des cours
         await renderCourses(allFilesData);
         
         setupSearchAndFilterListeners();
@@ -104,7 +101,7 @@ function buildSelectOptions(elementId, setValues) {
     });
 }
 
-// INTEGREE ET CORRIGEE : Fabrique l'affichage visuel avec le compteur récupéré en direct
+// Fonction d'affichage simplifiée (Zéro compteur, chargement instantané)
 async function renderCourses(courses) {
     const listContainer = document.getElementById('course-list');
     listContainer.innerHTML = '';
@@ -114,20 +111,16 @@ async function renderCourses(courses) {
         return;
     }
     
-    // On parcourt chaque cours pour fabriquer sa structure HTML
     for (const course of courses) {
-        // Étape A : Récupération asynchrone du compteur de téléchargement en ligne
-        const count = await fetchDownloadCount(course.fullPath);
-
-        // Étape B : Gestion du bouton d'action selon l'extension
+        // Gestion du bouton d'action selon l'extension sans appel d'API
         let actionBtn = '';
         if (course.extension === 'md') {
-            actionBtn = `<button class="btn btn-primary" onclick="registerDownload('${course.fullPath}'); updateVisualCount('${course.fullPath}'); readMarkdown('${encodeURI(course.downloadUrl)}')">Lire en ligne</button>`;
+            actionBtn = `<button class="btn btn-primary" onclick="readMarkdown('${encodeURI(course.downloadUrl)}')">Lire en ligne</button>`;
         } else {
-            actionBtn = `<a href="${course.downloadUrl}" target="_blank" onclick="registerDownload('${course.fullPath}'); updateVisualCount('${course.fullPath}')" class="btn btn-outline">Ouvrir / Télécharger</a>`;
+            actionBtn = `<a href="${course.downloadUrl}" target="_blank" class="btn btn-outline" download>Ouvrir / Télécharger</a>`;
         }
 
-        // Étape C : Génération visuelle de la carte
+        // Génération visuelle de la carte épurée
         const card = document.createElement('div');
         card.className = 'card course-card';
         card.innerHTML = `
@@ -140,9 +133,6 @@ async function renderCourses(courses) {
                     ${course.theme ? `<span class="meta-tag">📌 ${course.theme}</span>` : ''}
                 </div>
                 <h3>${course.cleanName}</h3>
-                <div class="download-badge" id="count-${getCounterKey(course.fullPath)}" style="display: inline-block; background-color: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">
-                    📥 ${count} téléchargement${count > 1 ? 's' : ''}
-                </div>
             </div>
             ${actionBtn}
         `;
@@ -494,56 +484,4 @@ function showGlobalStatus(text, type) {
     msgDiv.textContent = text;
     msgDiv.className = `status-box status-${type}`;
     msgDiv.style.display = 'block';
-}
-
-
-/* =========================================================
-   NUCLEUS : ENGINE DE COMPTAGE (CounterAPI integration)
-========================================================= */
-
-// Transforme le chemin d'accès en clé valide pour l'API (lettres, chiffres, tirets)
-function getCounterKey(filePath) {
-    return filePath.replace(/[^a-zA-Z0-9]/g, '_');
-}
-
-// Interroge CounterAPI pour récupérer la valeur en cours
-async function fetchDownloadCount(filePath) {
-    const key = getCounterKey(filePath);
-    try {
-        // Ajout de { cache: 'no-store' } pour forcer le navigateur à demander le vrai chiffre
-        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}`, { cache: 'no-store' });
-        
-        if (!response.ok) return 0; // Le 404 est normal, on retourne 0
-        const data = await response.json();
-        return data.count || 0;
-    } catch (err) {
-        return 0;
-    }
-}
-// Envoie un signal +1 à CounterAPI
-async function registerDownload(filePath) {
-    const key = getCounterKey(filePath);
-    try {
-        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}/up`);
-        
-        // On vérifie si l'API a bien reçu notre demande
-        if (response.ok) {
-            console.log("Succès : +1 envoyé à l'API pour", key);
-        } else {
-            console.error("Erreur : L'API a refusé le +1", response.status);
-        }
-    } catch (err) {
-        console.error("Erreur critique : Impossible de contacter l'API pour le +1", err);
-    }
-}
-
-// Met à jour à chaud le nombre affiché à l'écran sans rafraîchir la page entière
-function updateVisualCount(filePath) {
-    const key = getCounterKey(filePath);
-    const element = document.getElementById(`count-${key}`);
-    if (element) {
-        const currentCount = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
-        const newCount = currentCount + 1;
-        element.textContent = `📥 ${newCount} téléchargement${newCount > 1 ? 's' : ''}`;
-    }
 }

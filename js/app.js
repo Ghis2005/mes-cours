@@ -3,6 +3,9 @@ const GITHUB_OWNER = 'Ghis2005';
 const GITHUB_REPO = 'mes-cours';
 const GITHUB_BRANCH = 'main'; 
 const COURS_FOLDER = 'cours';
+
+// Projet unique pour tes compteurs (API Publique Gratuite CounterAPI)
+const COUNTER_PROJECT = 'ghis2005_mes_cours_partage'; 
 // ----------------------------
 
 let cachedToken = ''; // Stocké uniquement en mémoire pendant la session d'administration
@@ -41,54 +44,15 @@ async function initIndex() {
         allFilesData = courseFiles.map(file => parseGitPath(file));
 
         populateFilterOptions();
-        renderCourses(allFilesData);
+        
+        // On utilise "await" ici car renderCourses va maintenant chercher les compteurs sur le web
+        await renderCourses(allFilesData);
+        
         setupSearchAndFilterListeners();
         setupModal();
     } catch (error) {
         listContainer.innerHTML = `<p class="status-error" style="display:block;">Erreur : ${error.message}</p>`;
     }
-	
-	// Exemple de ce qu'il faut faire dans ta fonction d'affichage (initIndex) :
-	async function renderCoursesForStudents(files) {
-		const container = document.getElementById('course-list');
-		container.innerHTML = '';
-
-		for (const file of files) {
-			// A. On va chercher le score du fichier en ligne
-			const count = await fetchDownloadCount(file.fullPath);
-
-			const item = document.createElement('div');
-			item.className = 'course-card';
-			
-			// B. On injecte le bouton avec un attribut 'onclick' pour déclencher le +1
-			item.innerHTML = `
-				<h3>${file.cleanName}</h3>
-				<p class="text-muted">Matière : ${file.matiere}</p>
-				
-				<span class="download-badge" id="count-${getCounterKey(file.fullPath)}">📥 ${count} téléchargement${count > 1 ? 's' : ''}</span>
-				
-				<a href="${file.downloadUrl}" 
-				   onclick="registerDownload('${file.fullPath}'); updateVisualCount('${file.fullPath}')" 
-				   class="btn btn-primary">
-				   Télécharger
-				</a>
-			`;
-			container.appendChild(item);
-		}
-	}
-
-	// Petite fonction bonus pour mettre à jour le chiffre sur l'écran instantanément sans recharger la page
-	function updateVisualCount(filePath) {
-		const key = getCounterKey(filePath);
-		const element = document.getElementById(`count-${key}`);
-		if (element) {
-			// On récupère le nombre actuel écrit dans le texte et on fait +1
-			const currentCount = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
-			const newCount = currentCount + 1;
-			element.textContent = `📥 ${newCount} téléchargement${newCount > 1 ? 's' : ''}`;
-		}
-	}
-	
 }
 
 function parseGitPath(file) {
@@ -140,18 +104,30 @@ function buildSelectOptions(elementId, setValues) {
     });
 }
 
-function renderCourses(courses) {
+// INTEGREE ET CORRIGEE : Fabrique l'affichage visuel avec le compteur récupéré en direct
+async function renderCourses(courses) {
     const listContainer = document.getElementById('course-list');
     listContainer.innerHTML = '';
+    
     if (courses.length === 0) {
         listContainer.innerHTML = '<p class="text-muted">Aucun cours trouvé.</p>';
         return;
     }
-    courses.forEach(course => {
-        let actionBtn = course.extension === 'md' 
-            ? `<button class="btn btn-primary" onclick="readMarkdown('${encodeURI(course.downloadUrl)}')">Lire en ligne</button>`
-            : `<a href="${course.downloadUrl}" target="_blank" class="btn btn-outline">Ouvrir / Télécharger</a>`;
+    
+    // On parcourt chaque cours pour fabriquer sa structure HTML
+    for (const course of courses) {
+        // Étape A : Récupération asynchrone du compteur de téléchargement en ligne
+        const count = await fetchDownloadCount(course.fullPath);
 
+        // Étape B : Gestion du bouton d'action selon l'extension
+        let actionBtn = '';
+        if (course.extension === 'md') {
+            actionBtn = `<button class="btn btn-primary" onclick="registerDownload('${course.fullPath}'); updateVisualCount('${course.fullPath}'); readMarkdown('${encodeURI(course.downloadUrl)}')">Lire en ligne</button>`;
+        } else {
+            actionBtn = `<a href="${course.downloadUrl}" target="_blank" onclick="registerDownload('${course.fullPath}'); updateVisualCount('${course.fullPath}')" class="btn btn-outline">Ouvrir / Télécharger</a>`;
+        }
+
+        // Étape C : Génération visuelle de la carte
         const card = document.createElement('div');
         card.className = 'card course-card';
         card.innerHTML = `
@@ -164,11 +140,14 @@ function renderCourses(courses) {
                     ${course.theme ? `<span class="meta-tag">📌 ${course.theme}</span>` : ''}
                 </div>
                 <h3>${course.cleanName}</h3>
+                <div class="download-badge" id="count-${getCounterKey(course.fullPath)}" style="display: inline-block; background-color: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">
+                    📥 ${count} téléchargement${count > 1 ? 's' : ''}
+                </div>
             </div>
             ${actionBtn}
         `;
         listContainer.appendChild(card);
-    });
+    }
 }
 
 function setupSearchAndFilterListeners() {
@@ -178,7 +157,7 @@ function setupSearchAndFilterListeners() {
     const filterMatiere = document.getElementById('filter-matiere');
     const filterType = document.getElementById('filter-type');
 
-    const runFiltering = () => {
+    const runFiltering = async () => {
         const query = searchInput.value.trim().toLowerCase();
         const filtered = allFilesData.filter(f => {
             if (query && !f.searchString.includes(query)) return false;
@@ -192,7 +171,7 @@ function setupSearchAndFilterListeners() {
             }
             return true;
         });
-        renderCourses(filtered);
+        await renderCourses(filtered);
     };
 
     [searchInput, filterAnnee, filterSemestre, filterMatiere, filterType].forEach(el => el.addEventListener('input', runFiltering));
@@ -262,9 +241,7 @@ async function refreshAdminWorkspace() {
         
         adminFilesList = courseFiles.map(file => parseGitPath(file));
 
-        // Remplir les datalists de suggestions automatiques
         populateDatalists();
-        // Afficher la liste de gestion des fichiers
         renderAdminManagementList();
 
         document.getElementById('admin-workspace').style.display = 'block';
@@ -301,7 +278,6 @@ function fillDatalist(id, setValues) {
     });
 }
 
-/* Génération de l'interface de gestion (Liste des fichiers existants) */
 function renderAdminManagementList() {
     const container = document.getElementById('admin-management-list');
     container.innerHTML = '';
@@ -363,7 +339,6 @@ function toggleEditZone(index) {
     zone.style.display = zone.style.display === 'none' ? 'block' : 'none';
 }
 
-/* SUPPRIMER UN COURS */
 async function deleteFile(encodedPath, sha) {
     const path = decodeURIComponent(encodedPath);
     if (!confirm(`Voulez-vous vraiment supprimer définitivement le cours : \n${path} ?`)) return;
@@ -393,18 +368,15 @@ async function deleteFile(encodedPath, sha) {
     }
 }
 
-/* MODIFIER L'ARBORESCENCE / DEPLACER / RENOMMER */
 async function moveFile(index) {
     const oldFile = adminFilesList[index];
     
-    // Récupération des saisies de modifications
     const newAnnee = document.getElementById(`edit-annee-${index}`).value.trim();
     const newSemestre = document.getElementById(`edit-semestre-${index}`).value.trim();
     const newMatiere = document.getElementById(`edit-matiere-${index}`).value.trim();
     const newTheme = document.getElementById(`edit-theme-${index}`).value.trim();
     const newName = document.getElementById(`edit-name-${index}`).value.trim();
 
-    // Reconstruction du nouveau chemin cible
     let newPath = `${COURS_FOLDER}/${newAnnee}/${newSemestre}/${newMatiere}`;
     if (newTheme) newPath += `/${newTheme}`;
     newPath += `/${newName}`;
@@ -417,16 +389,14 @@ async function moveFile(index) {
     showGlobalStatus('Déplacement du fichier en cours...', 'warning');
 
     try {
-        // Étape A : Récupérer le contenu Base64 actuel du fichier
         const getUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(oldFile.fullPath)}?ref=${GITHUB_BRANCH}`;
         const getResponse = await fetch(getUrl, {
             headers: { 'Authorization': `Bearer ${cachedToken}` }
         });
         if (!getResponse.ok) throw new Error("Impossible de lire le fichier d'origine.");
         const oldFileData = await getResponse.json();
-        const base64Content = oldFileData.content; // Contenu brut encodé renvoyé par GitHub
+        const base64Content = oldFileData.content;
 
-        // Étape B : Créer le fichier à son nouvel emplacement (PUT)
         const putUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(newPath)}`;
         const putResponse = await fetch(putUrl, {
             method: 'PUT',
@@ -442,7 +412,6 @@ async function moveFile(index) {
         });
         if (!putResponse.ok) throw new Error("Impossible de créer le fichier à la nouvelle destination.");
 
-        // Étape C : Supprimer l'ancien fichier d'origine (DELETE)
         const deleteUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(oldFile.fullPath)}`;
         await fetch(deleteUrl, {
             method: 'DELETE',
@@ -464,7 +433,6 @@ async function moveFile(index) {
     }
 }
 
-/* UPLOADER UN NOUVEAU COURS */
 async function handleUpload() {
     const annee = document.getElementById('course-annee').value.trim();
     const semestre = document.getElementById('course-semestre').value.trim();
@@ -526,4 +494,48 @@ function showGlobalStatus(text, type) {
     msgDiv.textContent = text;
     msgDiv.className = `status-box status-${type}`;
     msgDiv.style.display = 'block';
+}
+
+
+/* =========================================================
+   NUCLEUS : ENGINE DE COMPTAGE (CounterAPI integration)
+========================================================= */
+
+// Transforme le chemin d'accès en clé valide pour l'API (lettres, chiffres, tirets)
+function getCounterKey(filePath) {
+    return filePath.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// Interroge CounterAPI pour récupérer la valeur en cours
+async function fetchDownloadCount(filePath) {
+    const key = getCounterKey(filePath);
+    try {
+        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}`);
+        if (!response.ok) return 0;
+        const data = await response.json();
+        return data.count || 0;
+    } catch (err) {
+        return 0;
+    }
+}
+
+// Envoie un signal +1 à CounterAPI
+async function registerDownload(filePath) {
+    const key = getCounterKey(filePath);
+    try {
+        await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}/up`);
+    } catch (err) {
+        console.error("Échec d'incrémentation du compteur", err);
+    }
+}
+
+// Met à jour à chaud le nombre affiché à l'écran sans rafraîchir la page entière
+function updateVisualCount(filePath) {
+    const key = getCounterKey(filePath);
+    const element = document.getElementById(`count-${key}`);
+    if (element) {
+        const currentCount = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
+        const newCount = currentCount + 1;
+        element.textContent = `📥 ${newCount} téléchargement${newCount > 1 ? 's' : ''}`;
+    }
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Cours - Organisation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-flex">
+            <h1>📚 Mon Hub de Cours</h1>
+            <nav>
+                <a href="admin.html" class="btn btn-outline">Administration</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="search-filter-section card">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="🔍 Rechercher un cours, une matière, un thème...">
+            </div>
+            
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="filter-annee">Année</label>
+                    <select id="filter-annee"><option value="all">Toutes</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-semestre">Semestre</label>
+                    <select id="filter-semestre"><option value="all">Tous</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-matiere">Matière</label>
+                    <select id="filter-matiere"><option value="all">Toutes</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-type">Format</label>
+                    <select id="filter-type">
+                        <option value="all">Tous les formats</option>
+                        <option value="md">Markdown (.md)</option>
+                        <option value="pdf">PDF (.pdf)</option>
+                        <option value="image">Images (PNG, JPG...)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section id="course-list" class="grid-layout">
+            <p>Chargement de l'arborescence des cours...</p>
+        </section>
+    </main>
+
+    <div id="course-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="md-viewer"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

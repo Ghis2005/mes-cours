@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Classer et Uploader</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container header-flex">
+            <h1>⚙️ Espace Gestion</h1>
+            <nav>
+                <a href="index.html" class="btn btn-outline">Retour au site</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container admin-container">
+        <div class="card">
+            <h2>Uploader et classer un cours</h2>
+            <p class="text-muted">Remplissez les critères pour structurer automatiquement vos dossiers sur GitHub.</p>
+            
+            <form id="upload-form">
+                <div class="form-group">
+                    <label for="github-pat">GitHub Personal Access Token (PAT) :</label>
+                    <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="course-annee">Année :</label>
+                        <input type="text" id="course-annee" placeholder="ex: 1ere Annee" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="course-semestre">Semestre :</label>
+                        <input type="text" id="course-semestre" placeholder="ex: Semestre 1" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="course-matiere">Matière :</label>
+                        <input type="text" id="course-matiere" placeholder="ex: Analyse Mathematique" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="course-theme">Thème (Optionnel) :</label>
+                        <input type="text" id="course-theme" placeholder="ex: Series de Fourier">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="file-input">Sélectionnez le document :</label>
+                    <input type="file" id="file-input" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn">Publier le cours</button>
+            </form>
+            
+            <div id="status-message"></div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

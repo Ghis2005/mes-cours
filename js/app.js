@@ -510,15 +510,22 @@ function getCounterKey(filePath) {
 async function fetchDownloadCount(filePath) {
     const key = getCounterKey(filePath);
     try {
-        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}`);
-        if (!response.ok) return 0;
+        const response = await fetch(`https://api.countapi.xyz/get/${COUNTER_PROJECT}/${key}`);
+        
+        // On vérifie si la réponse est bien valide
+        if (!response.ok) {
+            console.error(`Erreur API pour ${key} : ${response.status}`);
+            return 0;
+        }
+        
         const data = await response.json();
-        return data.count || 0;
+        return data.value || 0;
     } catch (err) {
+        // ICI : On affiche l'erreur en vrai pour comprendre le blocage
+        console.error("Erreur de connexion à l'API :", err);
         return 0;
     }
 }
-
 // Envoie un signal +1 à CounterAPI
 async function registerDownload(filePath) {
     const key = getCounterKey(filePath);

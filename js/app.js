@@ -510,19 +510,13 @@ function getCounterKey(filePath) {
 async function fetchDownloadCount(filePath) {
     const key = getCounterKey(filePath);
     try {
-        const response = await fetch(`https://api.countapi.xyz/get/${COUNTER_PROJECT}/${key}`);
+        // Ajout de { cache: 'no-store' } pour forcer le navigateur à demander le vrai chiffre
+        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}`, { cache: 'no-store' });
         
-        // On vérifie si la réponse est bien valide
-        if (!response.ok) {
-            console.error(`Erreur API pour ${key} : ${response.status}`);
-            return 0;
-        }
-        
+        if (!response.ok) return 0; // Le 404 est normal, on retourne 0
         const data = await response.json();
-        return data.value || 0;
+        return data.count || 0;
     } catch (err) {
-        // ICI : On affiche l'erreur en vrai pour comprendre le blocage
-        console.error("Erreur de connexion à l'API :", err);
         return 0;
     }
 }
@@ -530,9 +524,16 @@ async function fetchDownloadCount(filePath) {
 async function registerDownload(filePath) {
     const key = getCounterKey(filePath);
     try {
-        await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}/up`);
+        const response = await fetch(`https://api.counterapi.dev/v1/projects/${COUNTER_PROJECT}/counters/${key}/up`);
+        
+        // On vérifie si l'API a bien reçu notre demande
+        if (response.ok) {
+            console.log("Succès : +1 envoyé à l'API pour", key);
+        } else {
+            console.error("Erreur : L'API a refusé le +1", response.status);
+        }
     } catch (err) {
-        console.error("Échec d'incrémentation du compteur", err);
+        console.error("Erreur critique : Impossible de contacter l'API pour le +1", err);
     }
 }
 

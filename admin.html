@@ -3,61 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration - Classer et Uploader</title>
+    <title>Administration - Gestion des Cours</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
         <div class="container header-flex">
-            <h1>⚙️ Espace Gestion</h1>
+            <h1>⚙️ Espace Gestion & Modifications</h1>
             <nav>
                 <a href="index.html" class="btn btn-outline">Retour au site</a>
             </nav>
         </div>
     </header>
 
-    <main class="container admin-container">
-        <div class="card">
-            <h2>Uploader et classer un cours</h2>
-            <p class="text-muted">Remplissez les critères pour structurer automatiquement vos dossiers sur GitHub.</p>
+    <main class="container admin-layout-container">
+        <div class="card token-card">
+            <h2>1. Connexion à l'API GitHub</h2>
+            <div class="form-group inline-form">
+                <input type="password" id="github-pat" placeholder="Coller votre Personal Access Token (ghp_...)" required>
+                <button type="button" id="btn-load-admin" class="btn btn-primary">Charger l'Espace Admin</button>
+            </div>
+            <div id="global-status-message"></div>
+        </div>
+
+        <div id="admin-workspace" style="display: none;">
             
-            <form id="upload-form">
-                <div class="form-group">
-                    <label for="github-pat">GitHub Personal Access Token (PAT) :</label>
-                    <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="course-annee">Année :</label>
-                        <input type="text" id="course-annee" placeholder="ex: 1ere Annee" required>
+            <div class="card" style="margin-bottom: 30px;">
+                <h2>2. Ajouter et classer un nouveau cours</h2>
+                <form id="upload-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="course-annee">Année :</label>
+                            <input type="text" id="course-annee" list="annees-list" placeholder="Sélectionner ou écrire..." required>
+                            <datalist id="annees-list"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="course-semestre">Semestre :</label>
+                            <input type="text" id="course-semestre" list="semestres-list" placeholder="Sélectionner ou écrire..." required>
+                            <datalist id="semestres-list"></datalist>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="course-semestre">Semestre :</label>
-                        <input type="text" id="course-semestre" placeholder="ex: Semestre 1" required>
-                    </div>
-                </div>
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="course-matiere">Matière :</label>
-                        <input type="text" id="course-matiere" placeholder="ex: Analyse Mathematique" required>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="course-matiere">Matière :</label>
+                            <input type="text" id="course-matiere" list="matieres-list" placeholder="Sélectionner ou écrire..." required>
+                            <datalist id="matieres-list"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="course-theme">Thème (Optionnel) :</label>
+                            <input type="text" id="course-theme" list="themes-list" placeholder="Sélectionner ou écrire...">
+                            <datalist id="themes-list"></datalist>
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label for="course-theme">Thème (Optionnel) :</label>
-                        <input type="text" id="course-theme" placeholder="ex: Series de Fourier">
+                        <label for="file-input">Sélectionnez le document :</label>
+                        <input type="file" id="file-input" required>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="file-input">Sélectionnez le document :</label>
-                    <input type="file" id="file-input" required>
-                </div>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">Publier le cours</button>
+                </form>
+            </div>
 
-                <button type="submit" class="btn btn-primary" id="submit-btn">Publier le cours</button>
-            </form>
-            
-            <div id="status-message"></div>
+            <div class="card">
+                <h2>3. Gérer et modifier les cours existants</h2>
+                <p class="text-muted" style="margin-bottom: 15px;">Modifier l'arborescence déplacera automatiquement le fichier sur GitHub.</p>
+                <div id="admin-management-list" class="management-list">
+                    </div>
+            </div>
+
         </div>
     </main>
 
